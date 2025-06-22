@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Upload, Clock, PlusCircle, Sparkles, Loader, ChevronDown, Filter, X } from 'lucide-react';
+import { Search, Upload, Clock, PlusCircle, Sparkles, Loader, ChevronDown, Filter, X, CheckCircle } from 'lucide-react';
 
 // Reusable components (assuming they are in ../components/common/)
 import Card from '../components/common/Card';
@@ -13,6 +13,7 @@ import GeminiResponseCard from '../components/common/GeminiResponseCard';
 // API call functions (assuming they are in ../api/)
 // import { searchTimestamps, addBulbRecord } from '../api/backendAPI'; // Updated API functions
 import { callGeminiAPI } from '../api/geminiAPI';
+import { searchTimestamp, uploadSearchDataset, addBulbRecord } from '../api/backendAPI'; // Updated API functions
 import SelectInput from '../components/common/SelectInput';
 
 // --- Mock Data ---
@@ -30,7 +31,7 @@ const mockSearchResponse = {
 
 const initialBulbFormState = {
     bulb_number: '',
-    timestamp: new Date().toISOString().slice(0, 16),
+    timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '), // Format as YYYY-MM-DD HH:MM
     power_consumption__Watts: '',
     voltage_levels__Volts: '',
     current_fluctuations__Amperes: '',
@@ -99,7 +100,10 @@ const FilterPopover = ({ filters, setFilters, onApply, onReset, onClose }) => {
 
 
 const FastSearchPage = () => {
-    const [fileName, setFileName] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isDatasetLoaded, setIsDatasetLoaded] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+
     const [timestamp, setTimestamp] = useState(new Date().toISOString().slice(0, 19).replace('T', ' '));
     const [results, setResults] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -119,17 +123,44 @@ const FastSearchPage = () => {
     const [isGeminiLoading, setIsGeminiLoading] = useState(false);
     
     const handleFileChange = (e) => {
-        if (e.target.files[0]) setFileName(e.target.files[0].name);
+        if (e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+            setIsDatasetLoaded(false);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+        setIsUploading(true);
+        try {
+            await uploadSearchDataset(selectedFile);
+            setIsDatasetLoaded(true);
+        } catch (error) {
+            console.error("Upload failed", error);
+        }
+        setIsUploading(false);
     };
 
     const handleSearch = async () => {
+        if (!isDatasetLoaded) return;
         setIsLoading(true);
         setResults(null);
         setGeminiAnalysis('');
-        setTimeout(() => {
-            setResults(mockSearchResponse);
+        try {
+            const response = await searchTimestamp(timestamp); // REAL
+            // const response = mockSearchResponse; // MOCK
+            setResults(response);
             setIsLoading(false);
-        }, 1500);
+
+            // setTimeout(() => { // MOCK
+            //     setResults(mockSearchResponse);
+            //     setIsLoading(false);
+            // }, 1000);
+
+        } catch (error) {
+            console.error("Search failed", error);
+            setIsLoading(false);
+        }
     };
 
     const handleAnalyzeCluster = async () => {
@@ -155,9 +186,9 @@ const FastSearchPage = () => {
             return (
                 n.bulb_number.toString().includes(filters.bulb_number) &&
                 n.environmental_conditions.toLowerCase().includes(filters.env_cond.toLowerCase()) &&
-                n.power_consumption__Watts >= powerMin && n.power_consumption__Watts <= powerMax &&
-                n.voltage_levels__Volts >= voltMin && n.voltage_levels__Volts <= voltMax &&
-                n.temperature__Celsius >= tempMin && n.temperature__Celsius <= tempMax
+                n.power_consumption >= powerMin && n.power_consumption <= powerMax &&
+                n.voltage_levels >= voltMin && n.voltage_levels <= voltMax &&
+                n.temperature >= tempMin && n.temperature <= tempMax
             );
         });
     }, [results, filters]);
@@ -172,12 +203,13 @@ const FastSearchPage = () => {
         setIsAddingBulb(true);
         setAddBulbMessage({ type: '', text: '' });
         try {
-            console.log("Adding bulb:", addBulbForm);
-            setTimeout(() => {
-              setAddBulbMessage({ type: 'success', text: `Successfully added bulb #${addBulbForm.bulb_number}.`});
-              setAddBulbForm(initialBulbFormState);
-              setIsAddingBulb(false);
-            }, 1000);
+            await addBulbRecord(addBulbForm); // REAL
+            // await new Promise(resolve => setTimeout(resolve, 1000)); // MOCK
+            setAddBulbMessage({ type: 'success', text: 'Bulb record added successfully!' });
+            // setAddBulbForm(initialBulbFormState); // Reset form
+            // setShowAddBulb(false); // Hide form after submission
+            setIsAddingBulb(false);
+            
         } catch (error) {
             setAddBulbMessage({ type: 'error', text: 'Failed to add bulb. Please try again.' });
             setIsAddingBulb(false);
@@ -190,16 +222,34 @@ const FastSearchPage = () => {
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1 space-y-6">
                     <Card>
-                       <h3 className="font-bold text-lg mb-4 text-white">1. Upload Dataset</h3>
-                       <FileInput onFileSelect={handleFileChange} fileName={fileName} />
+                        <h3 className="font-bold text-lg mb-4 text-white">1. Upload & Process Dataset</h3>
+                       <FileInput onFileSelect={handleFileChange} fileName={selectedFile?.name} />
+                       <Button onClick={handleUpload} disabled={!selectedFile || isUploading} className="w-full mt-4" icon={Upload}>
+                           {isUploading ? 'Processing...' : 'Upload Dataset'}
+                       </Button>
+                       {isDatasetLoaded && (
+                           <div className="flex items-center justify-center mt-4 text-green-400">
+                               <CheckCircle size={20} className="mr-2" />
+                               <span>Dataset loaded and ready.</span>
+                           </div>
+                       )}
+
+                       {/* <h3 className="font-bold text-lg mb-4 text-white">1. Upload Dataset</h3>
+                       <FileInput onFileSelect={handleFileChange} fileName={fileName} /> */}
+                       
                     </Card>
                     <Card>
                        <h3 className="font-bold text-lg mb-4 text-white">2. Search Query</h3>
-                        <TextInput label="Timestamp to Search" placeholder="YYYY-MM-DD HH:MM:SS" value={timestamp} onChange={e => setTimestamp(e.target.value)} icon={Clock}/>
+                        <TextInput label="Timestamp to Search" type='datetime-local' showSeconds={true} placeholder="YYYY-MM-DD HH:MM:SS" value={timestamp} onChange={e => setTimestamp(e.target.value)} icon={Clock}/>
+                        <Button onClick={handleSearch} disabled={isLoading || !isDatasetLoaded} className="w-full mt-4" icon={Search}>
+                            {isLoading ? 'Searching...' : 'Search'}
+                         </Button>
+                         {!isDatasetLoaded && <p className="text-xs text-center text-amber-400 mt-2">Please upload and process a dataset first.</p>}
+                    
                     </Card>
-                    <Button onClick={handleSearch} disabled={isLoading} className="w-full" icon={Search}>
+                    {/* <Button onClick={handleSearch} disabled={isLoading} className="w-full" icon={Search}>
                         {isLoading ? 'Searching...' : 'Search'}
-                    </Button>
+                    </Button> */}
                     <Card>
                         <button onClick={() => setShowAddBulb(!showAddBulb)} className="w-full flex justify-between items-center">
                             <h3 className="font-bold text-lg text-white">3. Add a New Bulb Record</h3>
@@ -270,11 +320,11 @@ const FastSearchPage = () => {
                                                 <tr key={index} className="border-b border-gray-700/50 hover:bg-gray-700/30">
                                                     <td className="p-3 font-mono text-white">{n.bulb_number}</td>
                                                     <td className="p-3 font-mono text-gray-300">{n.timestamp}</td>
-                                                    <td className="p-3 font-mono text-amber-300">{n.power_consumption__Watts}</td>
-                                                    <td className="p-3 font-mono text-green-300">{n.voltage_levels__Volts}</td>
-                                                    <td className="p-3 font-mono text-cyan-300">{n.current_fluctuations__Amperes}</td>
-                                                    <td className="p-3 font-mono text-orange-300">{n.temperature__Celsius}</td>
-                                                    <td className="p-3 font-mono text-purple-300">{n.current_fluctuations_env__Amperes}</td>
+                                                    <td className="p-3 font-mono text-amber-300">{n.power_consumption}</td>
+                                                    <td className="p-3 font-mono text-green-300">{n.voltage_levels}</td>
+                                                    <td className="p-3 font-mono text-cyan-300">{n.current_fluctuations}</td>
+                                                    <td className="p-3 font-mono text-orange-300">{n.temperature}</td>
+                                                    <td className="p-3 font-mono text-purple-300">{n.current_fluctuations_env}</td>
                                                     <td className={`p-3 font-mono ${n.environmental_conditions !== 'Clear' ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>{n.environmental_conditions}</td>
                                                 </tr>
                                             ))}

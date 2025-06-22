@@ -81,25 +81,95 @@ export async function predictFault (faultData) {
 };
 
 /**
- * Searches for the nearest timestamps in a dataset.
- * @param {File} file - The CSV dataset file.
- * @param {string} timestamp - The timestamp to search for.
- * @returns {Promise<object>} - The search results.
+ * Uploads a dataset file to the backend for searching.
+ * @param {File} file - The CSV or XLSX dataset file.
+ * @returns {Promise<object>} - The confirmation message from the backend.
  */
-export const searchTimestamps = async (file, timestamp) => {
+export const uploadSearchDataset = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
 
   try {
-    // The endpoint path should match your backend, e.g., '/search/timestamps'
-    const response = await apiClient.post(`/search/timestamps?timestamp=${timestamp}`, formData, {
+    // This endpoint now only handles the file upload.
+    const response = await apiClient.post('/search/search/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
     return response.data;
   } catch (error) {
-    console.error('Error searching timestamps:', error);
+    console.error('Error uploading search dataset:', error);
+    throw error;
+  }
+};
+
+/**
+ * Searches for a timestamp within the previously uploaded dataset.
+ * @param {string} timestamp - The timestamp to search for.
+ * @returns {Promise<object>} - The search results including neighbours.
+ */
+export const searchTimestamp = async (timestamp) => {
+  try {
+    // This endpoint performs the search on the loaded data.
+    // It sends a JSON object as specified by the Pydantic model.
+    const response = await apiClient.post('/search/search', { timestamp: timestamp });
+    console.log('Search results:', response.data);
+    // the csv columns are these:
+    // [bulb_number,timestamp,power_consumption (Watts),voltage_levels (Volts),current_fluctuations (Amperes),temperature (Celsius),environmental_conditions,current_fluctuations_env (Amperes)]
+    const data = {
+      query_timestamp: response.data.query_timestamp,
+      neighbours: response.data.neighbours.map(neighbour => ({
+        bulb_number: neighbour.bulb_number,
+        timestamp: neighbour.timestamp,
+        power_consumption: neighbour['power_consumption (Watts)'],
+        voltage_levels: neighbour['voltage_levels (Volts)'],
+        current_fluctuations: neighbour['current_fluctuations (Amperes)'],
+        temperature: neighbour['temperature (Celsius)'],
+        environmental_conditions: neighbour['environmental_conditions'],
+        current_fluctuations_env: neighbour['current_fluctuations_env (Amperes)']
+      })),
+      elapsed_ms: response.data.elapsed_ms
+
+    }
+    console.log('Formatted search data:', data);
+    return data;
+  } catch (error) {
+    console.error('Error searching timestamp:', error);
+    throw error;
+  }
+};
+
+
+/**
+ * Adds a new bulb data record to the dataset.
+ * @param {object} bulbData - The data for the new bulb record.
+ * @returns {Promise<object>} - The response from the backend.
+ */
+export const addBulbRecord = async (bulbData) => {
+  try {
+    // The endpoint path should match your backend, e.g., '/data/add'
+  console.log('Adding bulb record with data:', bulbData);
+  // Ensure bulbData is in the correct format expected by your backend.
+  if (!bulbData || !bulbData.bulb_number || !bulbData.timestamp) {
+    throw new Error('Invalid bulb data: bulb_number and timestamp are required.');
+  }
+  // The backend expects a JSON object with the bulb data.
+  // Adjust the keys as necessary to match your backend's expected format.
+  // const bulbDataFormatted = {
+  //   bulb_number: bulbData.bulb_number,
+  //   timestamp: bulbData.timestamp,
+  //   power_consumption__Watts: bulbData.power_consumption,
+  //   voltage_levels__Volts: bulbData.voltage_levels,
+  //   current_fluctuations__Amperes: bulbData.current_fluctuations,
+  //   temperature__Celsius: bulbData.temperature,
+  //   environmental_conditions: bulbData.environmental_conditions,
+  //   current_fluctuations_env__Amperes: bulbData.current_fluctuations
+  // };
+  // console.log('Formatted bulb data:', bulbDataFormatted);
+    const response = await apiClient.post('/search/add', bulbData);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding bulb record:', error);
     throw error;
   }
 };
