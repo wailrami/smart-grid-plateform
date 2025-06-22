@@ -52,6 +52,8 @@ class FastTimestampSearch:
 
             print(f"Loaded {final_count} records ({initial_count - final_count} invalid timestamps removed)")
             print(f"Time range: {self.data[self.timestamp_col].min()} to {self.data[self.timestamp_col].max()}")
+            print(self.data.tail(5))  # Print last 5 records for verification
+
             return True
         except Exception as e:
             print(f"Error loading data: {str(e)}")
@@ -96,10 +98,24 @@ class FastTimestampSearch:
         """Build BallTree from current data."""
         self.pre = self._prep(self.data[self.timestamp_col])
         self.ball_tree = BallTree(self.pre)
+        print("BallTree built successfully.")
 
     def add_entry(self, entry: dict):
-        """Add a new row (bulb) and rebuild BallTree."""
+        print("Adding new entry from core logic:", entry)
+        # Ensure timestamp is a pandas Timestamp
+        if isinstance(entry[self.timestamp_col], str):
+            entry[self.timestamp_col] = pd.to_datetime(entry[self.timestamp_col], errors='coerce')
         if self.data is None:
+            print("No data loaded, initializing with the new entry.")
             self.data = pd.DataFrame([entry])
-        self.data = pd.concat([self.data, pd.DataFrame([entry])], ignore_index=True)
+        else:
+            print(f"Current data size: {len(self.data)} records")
+            self.data = pd.concat([self.data, pd.DataFrame([entry])], ignore_index=True)
+        # Ensure the whole column is datetime
+        self.data[self.timestamp_col] = pd.to_datetime(self.data[self.timestamp_col], errors='coerce')
+        if not set(entry.keys()).issubset(set(self.data.columns)):
+            raise ValueError("New entry has different columns than existing data")
         self._build_tree()
+        print(f"New entry added. Total records: {len(self.data)}")
+        print(f"Time range: {self.data[self.timestamp_col].min()} to {self.data[self.timestamp_col].max()}")
+        print(self.data.tail(5))  # Print last 5 records for verification

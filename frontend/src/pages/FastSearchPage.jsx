@@ -31,7 +31,7 @@ const mockSearchResponse = {
 
 const initialBulbFormState = {
     bulb_number: '',
-    timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '), // Format as YYYY-MM-DD HH:MM
+    timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '), // Format as YYYY-MM-DD HH:MM
     power_consumption__Watts: '',
     voltage_levels__Volts: '',
     current_fluctuations__Amperes: '',
@@ -259,7 +259,7 @@ const FastSearchPage = () => {
                             <form onSubmit={handleAddBulbSubmit} className="space-y-3 mt-4 animate-fade-in">
                                 <div className="grid grid-cols-2 gap-3">
                                    <TextInput label="Bulb #" name="bulb_number" type="number" min={0} value={addBulbForm.bulb_number} onChange={handleAddBulbInputChange} />
-                                   <TextInput label="Timestamp" name="timestamp" type="datetime-local" value={addBulbForm.timestamp} onChange={handleAddBulbInputChange} />
+                                   <TextInput label="Timestamp" name="timestamp" type="datetime-local" showSeconds={true} value={addBulbForm.timestamp} onChange={handleAddBulbInputChange} />
                                    <TextInput label="Power (W)" name="power_consumption__Watts" min={0} type="number" step="0.1" value={addBulbForm.power_consumption__Watts} onChange={handleAddBulbInputChange} />
                                    <TextInput label="Voltage (V)" name="voltage_levels__Volts" min={0} type="number" step="0.1" value={addBulbForm.voltage_levels__Volts} onChange={handleAddBulbInputChange} />
                                    <TextInput label="Current Fluc. (A)" name="current_fluctuations__Amperes" min={0} type="number" step="0.01" value={addBulbForm.current_fluctuations__Amperes} onChange={handleAddBulbInputChange} />

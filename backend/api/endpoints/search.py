@@ -12,10 +12,10 @@ searcher = FastTimestampSearch()
 dataset_loaded = False
 print(searcher.timestamp_col)
 
-try:
-    searcher.load_model(MODEL_PATH)
-except FileNotFoundError:
-    raise RuntimeError(f"❌ model not found at {MODEL_PATH}")
+# try:
+#     searcher.load_model(MODEL_PATH)
+# except FileNotFoundError:
+#     raise RuntimeError(f"❌ model not found at {MODEL_PATH}")
 
 # -------- Models --------
 class TimestampQuery(BaseModel):
@@ -87,15 +87,20 @@ async def add_bulb(entry: BulbEntry):
         entry_dict = {
             "bulb_number": entry_dict["bulb_number"],
             "timestamp": entry_dict["timestamp"],
-            "power_consumption  (Watts)": entry_dict["power_consumption__Watts"],
-            "voltage_levels  (Volts)": entry_dict["voltage_levels__Volts"],
-            "current_fluctuations  (Amperes)": entry_dict["current_fluctuations__Amperes"],
-            "temperature  (Celsius)": entry_dict["temperature__Celsius"],
-            "current_fluctuations_env  (Amperes)": entry_dict["current_fluctuations_env__Amperes"],
-            "environmental_conditions": entry_dict["environmental_conditions"]
+            "power_consumption (Watts)": entry_dict["power_consumption__Watts"],
+            "voltage_levels (Volts)": entry_dict["voltage_levels__Volts"],
+            "current_fluctuations (Amperes)": entry_dict["current_fluctuations__Amperes"], 
+            "temperature (Celsius)": entry_dict["temperature__Celsius"],
+            "current_fluctuations_env (Amperes)": entry_dict["current_fluctuations_env__Amperes"],
+            "environmental_conditions": entry_dict["environmental_conditions"],
+            "fault_type": 0
         }
         searcher.add_entry(entry_dict)
+        print(f"Entry added: {entry_dict}")
+        global dataset_loaded
+        dataset_loaded = True  # Ensure dataset is marked as loaded after adding entry
         return {"message": "Bulb entry added and BallTree rebuilt."}
     except Exception as e:
+        print(f"Error adding bulb entry: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
