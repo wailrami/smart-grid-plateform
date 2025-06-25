@@ -209,7 +209,7 @@ const GeminiResponseCard = ({ content, isLoading }) => (
 async function callGeminiAPI(prompt) {
   // IMPORTANT: This is a placeholder for your actual API key.
   // In a real application, this should be handled securely and not hardcoded.
-  const apiKey = "AIzaSyDRBlUsVbxyJrRRBPLwnyhfNRod3gluBoM"; // Replace with your actual API key
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY; // Replace with your actual API key
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   const payload = {
