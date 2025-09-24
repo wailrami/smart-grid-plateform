@@ -20,7 +20,8 @@ This project is a comprehensive Smart Grid Platform developed as the final year 
 
 **Backend:**
 - **Language:** Python  
-- **Framework:** FastAPI   
+- **Framework:** FastAPI
+- **ML libraries:** Scikit-learn, Pandas, NumPy
 - RESTful API
 
 **Frontend:**
@@ -76,12 +77,12 @@ This project is a comprehensive Smart Grid Platform developed as the final year 
       ```
 
 4. **Configuration**
-    - Configure environment variables for both frontend and backend as required (API URLs, DB credentials, etc.).
+    - Configure environment variables for both frontend and backend as required (API URLs, etc.).
 
 ## Usage
 
 - Access the frontend via your browser at `http://localhost:5173` (or the specified port).
-- Interact with dashboards, manage users, and monitor smart grid data in real time.
+- Interact with dashboards, and monitor smart grid data in real time.
 
 ## Contributors
 
