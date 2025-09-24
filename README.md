@@ -4,8 +4,8 @@
 
 This project is a comprehensive Smart Grid Platform developed as the final year project for a Master's degree in Computer Science at **8 Mai 1945 Guelma University**, with a specialty in **Information and Communication Science and Technology**.
 
-- **Backend:** Developed by @nabilskandar, responsible for designing and implementing the server-side logic, API endpoints, data management, and integration with smart grid systems.
-- **Frontend:** Developed by @wailrami, focusing on building an interactive and user-friendly interface that visualizes the data and functionalities provided by the backend.
+- **Backend:** Developed by [nabilskandar](https://github.com/nabilskandar), responsible for designing and implementing the server-side logic, API endpoints, data management, and integration with smart grid systems.
+- **Frontend:** Developed by [wailrami](https://github.com/wailrami), focusing on building an interactive and user-friendly interface that visualizes the data and functionalities provided by the backend.
 
 ## Features
 
@@ -85,8 +85,8 @@ This project is a comprehensive Smart Grid Platform developed as the final year 
 
 ## Contributors
 
-- **Backend:** @nabilskandar
-- **Frontend:** @wailrami
+- **Backend:** [nabilskandar](https://github.com/nabilskandar)
+- **Frontend:** [wailrami](https://github.com/wailrami)
 
 
 ## Acknowledgements
